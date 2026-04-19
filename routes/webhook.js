@@ -22,25 +22,37 @@ router.post('/', async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  console.log('Webhook received:', event.type);
+
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const email = session.customer_details?.email;
     const customerId = session.customer;
     const paymentIntentId = session.payment_intent;
 
-    if (!email) return res.json({ received: true });
+    console.log('Session email:', email, 'customer:', customerId, 'payment:', paymentIntentId);
 
-    // Retrieve line items to determine which tier was purchased
+    if (!email) {
+      console.log('No email found, skipping');
+      return res.json({ received: true });
+    }
+
     try {
+      console.log('Fetching line items...');
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
       const priceId = lineItems.data[0]?.price?.id;
       const tier = TIER_PRICE_IDS[priceId] || 1;
+      console.log('Price ID:', priceId, 'Tier:', tier);
 
+      console.log('Generating key...');
       const keyData = await generateKey(email, customerId, paymentIntentId, tier);
-      console.log(`Tier ${tier} key generated for ${email}: ${keyData.key}`);
+      console.log(`Key generated: ${keyData.key}`);
+
+      console.log('Sending email...');
       await sendKeyEmail(email, keyData.key, tier);
+      console.log('Email sent!');
     } catch (err) {
-      console.error('Failed to generate key:', err.message);
+      console.error('Error:', err.message, err.stack);
     }
   }
 
