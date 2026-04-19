@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
   }
 
   // Pro uses Gemini 1.5 Pro — higher quality, longer context, better copywriting
-  const modelName = keyStatus.data.tier === 2 ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+  const modelName = keyStatus.data.tier === 2 ? 'gemini-2.0-flash' : 'gemini-2.0-flash-lite';
 
   try {
     const model = genAI.getGenerativeModel({
@@ -67,7 +67,7 @@ router.post('/', async (req, res) => {
     return res.json({ reply });
   } catch (err) {
     console.error('Gemini API error:', err.message);
-    return res.status(500).json({ error: 'AI service error' });
+    return res.status(500).json({ error: 'AI service error', detail: err.message });
   }
 });
 
