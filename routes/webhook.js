@@ -1,11 +1,16 @@
 const express = require('express');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { generateKey } = require('./keys');
-const { sendKeyEmail, sendExpiryEmail } = require('../email');
+const { sendKeyEmail } = require('../email');
 
 const router = express.Router();
 
-// Stripe sends events here after payment
+// Add your Stripe Price IDs here after creating products in Stripe dashboard
+const TIER_PRICE_IDS = {
+  [process.env.STRIPE_PRICE_STARTER]: 1, // $8 starter
+  [process.env.STRIPE_PRICE_PRO]: 2      // $15 pro
+};
+
 router.post('/', async (req, res) => {
   const sig = req.headers['stripe-signature'];
 
@@ -17,63 +22,25 @@ router.post('/', async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object;
-      const email = session.customer_details?.email;
-      const customerId = session.customer;
-      const subscriptionId = session.subscription;
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const email = session.customer_details?.email;
+    const customerId = session.customer;
+    const paymentIntentId = session.payment_intent;
 
-      if (!email) break;
+    if (!email) return res.json({ received: true });
 
-      try {
-        const keyData = await generateKey(email, customerId, subscriptionId);
-        console.log(`Key generated for ${email}: ${keyData.key}`);
-        await sendKeyEmail(email, keyData.key);
-      } catch (err) {
-        console.error('Failed to generate key:', err.message);
-      }
-      break;
-    }
+    // Retrieve line items to determine which tier was purchased
+    try {
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+      const priceId = lineItems.data[0]?.price?.id;
+      const tier = TIER_PRICE_IDS[priceId] || 1;
 
-    case 'customer.subscription.deleted':
-    case 'invoice.payment_failed': {
-      const obj = event.data.object;
-      const subscriptionId = obj.id || obj.subscription;
-
-      if (subscriptionId) {
-        const { createClient } = require('@supabase/supabase-js');
-        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-        const { data: keyRow } = await supabase
-          .from('license_keys')
-          .update({ status: 'expired' })
-          .eq('stripe_subscription_id', subscriptionId)
-          .select('email, key')
-          .single();
-
-        if (keyRow) {
-          await sendExpiryEmail(keyRow.email, keyRow.key);
-        }
-      }
-      break;
-    }
-
-    case 'invoice.payment_succeeded': {
-      // Renew subscription for another month
-      const invoice = event.data.object;
-      const subscriptionId = invoice.subscription;
-
-      if (subscriptionId) {
-        const { createClient } = require('@supabase/supabase-js');
-        const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-        const newExpiry = new Date();
-        newExpiry.setMonth(newExpiry.getMonth() + 1);
-        await supabase
-          .from('license_keys')
-          .update({ status: 'active', expires_at: newExpiry.toISOString() })
-          .eq('stripe_subscription_id', subscriptionId);
-      }
-      break;
+      const keyData = await generateKey(email, customerId, paymentIntentId, tier);
+      console.log(`Tier ${tier} key generated for ${email}: ${keyData.key}`);
+      await sendKeyEmail(email, keyData.key, tier);
+    } catch (err) {
+      console.error('Failed to generate key:', err.message);
     }
   }
 

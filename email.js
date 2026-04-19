@@ -4,12 +4,13 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM = 'Etsy AI Assistant <noreply@yourdomain.com>'; // replace with your verified Resend domain
 
-async function sendKeyEmail(email, key) {
+async function sendKeyEmail(email, key, tier = 1) {
+  const planName = tier === 2 ? 'Pro' : 'Starter';
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: '🛍️ Your Etsy AI Assistant License Key',
-    html: keyEmailTemplate(email, key)
+    subject: `🛍️ Your Etsy AI Assistant License Key (${planName} Plan)`,
+    html: keyEmailTemplate(email, key, tier)
   });
 }
 
@@ -22,7 +23,9 @@ async function sendExpiryEmail(email, key) {
   });
 }
 
-function keyEmailTemplate(email, key) {
+function keyEmailTemplate(email, key, tier = 1) {
+  const planName = tier === 2 ? 'Pro' : 'Starter';
+  const dailyLimit = tier === 2 ? '500' : '250';
   return `
 <!DOCTYPE html>
 <html>
@@ -59,7 +62,7 @@ function keyEmailTemplate(email, key) {
 
       <div class="key-box">
         <div class="key">${key}</div>
-        <small>Valid for 30 days · Auto-renews with your subscription</small>
+        <small>${planName} Plan · ${dailyLimit} uses/day · Valid for 30 days</small>
       </div>
 
       <div class="steps">
