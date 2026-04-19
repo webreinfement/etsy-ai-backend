@@ -2,14 +2,14 @@ const { Resend } = require('resend');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = 'ListifyAI <onboarding@resend.dev>';
+const FROM = 'RankifyAI <onboarding@resend.dev>';
 
 async function sendKeyEmail(email, key, tier = 1) {
   const planName = tier === 2 ? 'Pro' : 'Starter';
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: `🛍️ Your ListifyAI License Key (${planName} Plan)`,
+    subject: `🛍️ Your RankifyAI License Key (${planName} Plan)`,
     html: keyEmailTemplate(email, key, tier)
   });
 }
@@ -18,7 +18,7 @@ async function sendExpiryEmail(email, key) {
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: 'Your ListifyAI subscription has expired',
+    subject: 'Your RankifyAI subscription has expired',
     html: expiryEmailTemplate(key)
   });
 }
@@ -55,7 +55,7 @@ function keyEmailTemplate(email, key, tier = 1) {
   <div class="container">
     <div class="header">
       <h1>🛍️ You're all set!</h1>
-      <p>Your ListifyAI subscription is active</p>
+      <p>Your RankifyAI subscription is active</p>
     </div>
     <div class="body">
       <p>Hey there! Here's your license key. Keep this safe — you'll need it to activate the extension.</p>
@@ -69,7 +69,7 @@ function keyEmailTemplate(email, key, tier = 1) {
         <h3>How to activate</h3>
         <div class="step">
           <div class="step-num">1</div>
-          <p>Open the <strong style="color:#e0e0e0">ListifyAI</strong> extension in Chrome</p>
+          <p>Open the <strong style="color:#e0e0e0">RankifyAI</strong> extension in Chrome</p>
         </div>
         <div class="step">
           <div class="step-num">2</div>
@@ -114,7 +114,7 @@ function expiryEmailTemplate(key) {
       <h1>Your subscription has expired</h1>
     </div>
     <div class="body">
-      <p>Your ListifyAI subscription has ended. Your key <strong style="color:#f97316">${key}</strong> is no longer active.</p>
+      <p>Your RankifyAI subscription has ended. Your key <strong style="color:#f97316">${key}</strong> is no longer active.</p>
       <p>Renew your subscription to get back to creating optimized listings.</p>
       <a href="https://your-payment-link.com" class="renew-btn">Renew Subscription →</a>
       <p style="color:#6b7280; font-size:13px">Questions? Reply to this email.</p>

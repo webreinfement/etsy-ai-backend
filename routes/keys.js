@@ -94,7 +94,12 @@ router.post('/validate', async (req, res) => {
   if (!key) return res.status(400).json({ valid: false, message: 'No key provided.' });
 
   const result = await validateKey(key);
-  return res.json({ valid: result.valid, message: result.message });
+  return res.json({
+    valid: result.valid,
+    message: result.message,
+    expires_at: result.data?.expires_at || null,
+    tier: result.data?.tier || null
+  });
 });
 
 module.exports = router;
