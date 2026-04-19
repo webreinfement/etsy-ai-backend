@@ -118,7 +118,7 @@ function expiryEmailTemplate(key) {
     <div class="body">
       <p>Your RankifyAI subscription has ended. Your key <strong style="color:#f97316">${key}</strong> is no longer active.</p>
       <p>Renew your subscription to get back to creating optimized listings.</p>
-      <a href="https://your-payment-link.com" class="renew-btn">Renew Subscription →</a>
+      <a href="https://rankifyai.netlify.app/#pricing" class="renew-btn">Get Access Again →</a>
       <p style="color:#6b7280; font-size:13px">Questions? Reply to this email.</p>
     </div>
   </div>

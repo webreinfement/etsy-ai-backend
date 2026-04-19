@@ -17,7 +17,7 @@ Format responses clearly with sections labeled: TITLE, DESCRIPTION, TAGS.
 Be conversational and helpful for follow-up questions.`;
 
 router.post('/', async (req, res) => {
-  const { key, messages, pageContext } = req.body;
+  const { key, messages, pageContext, image } = req.body;
 
   if (!key || !messages) {
     return res.status(400).json({ error: 'Missing key or messages' });
@@ -53,7 +53,13 @@ router.post('/', async (req, res) => {
 
     const chat = model.startChat({ history });
     const lastMessage = formattedMessages[formattedMessages.length - 1].content;
-    const result = await chat.sendMessage(lastMessage);
+
+    // If image attached, send as multimodal message
+    const messageParts = image
+      ? [{ text: lastMessage }, { inlineData: { data: image.data, mimeType: image.mimeType } }]
+      : lastMessage;
+
+    const result = await chat.sendMessage(messageParts);
     const reply = result.response.text();
 
     await keyStatus.incrementUsage();
