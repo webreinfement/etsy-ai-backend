@@ -65,11 +65,11 @@ async function validateKey(key) {
   };
 }
 
-async function generateKey(email, stripeCustomerId, paymentIntentId, tier = 1) {
+async function generateKey(email, stripeCustomerId, paymentIntentId, tier = 1, days = 30) {
   const key = `ESY-${uuidv4().replace(/-/g, '').toUpperCase().slice(0, 4)}-${uuidv4().replace(/-/g, '').toUpperCase().slice(0, 4)}-${uuidv4().replace(/-/g, '').toUpperCase().slice(0, 4)}`;
 
   const expiresAt = new Date();
-  expiresAt.setMonth(expiresAt.getMonth() + 1);
+  expiresAt.setDate(expiresAt.getDate() + days);
 
   const { data, error } = await supabase.from('license_keys').insert({
     key,

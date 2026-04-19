@@ -4,13 +4,14 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM = 'RankifyAI <onboarding@resend.dev>';
 
-async function sendKeyEmail(email, key, tier = 1) {
+async function sendKeyEmail(email, key, tier = 1, days = 30) {
   const planName = tier === 2 ? 'Pro' : 'Starter';
+  const duration = days === 1 ? '1 Day' : days === 7 ? '1 Week' : '1 Month';
   await resend.emails.send({
     from: FROM,
     to: email,
-    subject: `🛍️ Your RankifyAI License Key (${planName} Plan)`,
-    html: keyEmailTemplate(email, key, tier)
+    subject: `🛍️ Your RankifyAI License Key (${planName} ${duration})`,
+    html: keyEmailTemplate(email, key, tier, days)
   });
 }
 
@@ -23,9 +24,10 @@ async function sendExpiryEmail(email, key) {
   });
 }
 
-function keyEmailTemplate(email, key, tier = 1) {
+function keyEmailTemplate(email, key, tier = 1, days = 30) {
   const planName = tier === 2 ? 'Pro' : 'Starter';
   const dailyLimit = tier === 2 ? '500' : '250';
+  const duration = days === 1 ? '1 day' : days === 7 ? '7 days' : '30 days';
   return `
 <!DOCTYPE html>
 <html>
@@ -62,7 +64,7 @@ function keyEmailTemplate(email, key, tier = 1) {
 
       <div class="key-box">
         <div class="key">${key}</div>
-        <small>${planName} Plan · ${dailyLimit} uses/day · Valid for 30 days</small>
+        <small>${planName} Plan · ${dailyLimit} uses/day · Valid for ${duration}</small>
       </div>
 
       <div class="steps">

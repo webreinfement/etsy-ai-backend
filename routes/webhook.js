@@ -5,10 +5,15 @@ const { sendKeyEmail } = require('../email');
 
 const router = express.Router();
 
-// Add your Stripe Price IDs here after creating products in Stripe dashboard
-const TIER_PRICE_IDS = {
-  [process.env.STRIPE_PRICE_STARTER]: 1, // $8 starter
-  [process.env.STRIPE_PRICE_PRO]: 2      // $15 pro
+// Maps Stripe Price IDs to { tier, days }
+// Add your price IDs to Railway env vars
+const PRICE_MAP = {
+  [process.env.STRIPE_PRICE_T1_DAY]:   { tier: 1, days: 1 },
+  [process.env.STRIPE_PRICE_T1_WEEK]:  { tier: 1, days: 7 },
+  [process.env.STRIPE_PRICE_T1_MONTH]: { tier: 1, days: 30 },
+  [process.env.STRIPE_PRICE_T2_DAY]:   { tier: 2, days: 1 },
+  [process.env.STRIPE_PRICE_T2_WEEK]:  { tier: 2, days: 7 },
+  [process.env.STRIPE_PRICE_T2_MONTH]: { tier: 2, days: 30 },
 };
 
 router.post('/', async (req, res) => {
@@ -41,15 +46,15 @@ router.post('/', async (req, res) => {
       console.log('Fetching line items...');
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
       const priceId = lineItems.data[0]?.price?.id;
-      const tier = TIER_PRICE_IDS[priceId] || 1;
-      console.log('Price ID:', priceId, 'Tier:', tier);
+      const { tier = 1, days = 30 } = PRICE_MAP[priceId] || {};
+      console.log('Price ID:', priceId, 'Tier:', tier, 'Days:', days);
 
       console.log('Generating key...');
-      const keyData = await generateKey(email, customerId, paymentIntentId, tier);
+      const keyData = await generateKey(email, customerId, paymentIntentId, tier, days);
       console.log(`Key generated: ${keyData.key}`);
 
       console.log('Sending email...');
-      await sendKeyEmail(email, keyData.key, tier);
+      await sendKeyEmail(email, keyData.key, tier, days);
       console.log('Email sent!');
     } catch (err) {
       console.error('Error:', err.message, err.stack);

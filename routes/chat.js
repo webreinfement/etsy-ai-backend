@@ -36,9 +36,12 @@ router.post('/', async (req, res) => {
     };
   }
 
+  // Pro uses Gemini 1.5 Pro — higher quality, longer context, better copywriting
+  const modelName = keyStatus.data.tier === 2 ? 'gemini-1.5-pro' : 'gemini-1.5-flash';
+
   try {
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: modelName,
       systemInstruction: SYSTEM_PROMPT
     });
 
