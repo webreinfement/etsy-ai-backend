@@ -2,7 +2,7 @@ const { Resend } = require('resend');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM = 'ListifyAI <noreply@yourdomain.com>'; // replace with your verified Resend domain
+const FROM = 'ListifyAI <onboarding@resend.dev>';
 
 async function sendKeyEmail(email, key, tier = 1) {
   const planName = tier === 2 ? 'Pro' : 'Starter';
